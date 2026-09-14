@@ -65,12 +65,12 @@ Application Logs -> Amazon CloudWatch
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/api/v1/register` | Register a new user |
-| POST | `/api/v1/login` | Authenticate and receive JWT token |
-| POST | `/api/v1/accounts` | Create a financial account |
-| POST | `/api/v1/transactions` | Create a transaction |
-| GET | `/api/v1/transactions` | Retrieve transactions with filters |
-| GET | `/api/v1/analytics/transactions` | Retrieve transaction analytics |
-| GET | `/health/full` | Check API, database, and Redis status |
+| POST | `/api/v1/login` | Authenticate a user and issue a JWT access token |
+| POST | `/api/v1/accounts` | Create an authenticated user's financial account |
+| POST | `/api/v1/transactions` | Create a transaction for a user-owned account |
+| GET | `/api/v1/transactions` | Query transactions with filtering and pagination |
+| GET | `/api/v1/analytics/transactions` | Retrieve user-scoped transaction analytics |
+| GET | `/health/full` | Check API, PostgreSQL, and Redis connectivity |
 
 ## Local Setup
 
