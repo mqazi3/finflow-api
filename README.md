@@ -33,16 +33,18 @@ Application Logs -> Amazon CloudWatch
 
 ## Features
 
-- JWT authentication
-- User registration and login
-- Account creation and balance tracking
+- User registration and login with JWT-based authentication
+- Password hashing with bcrypt
+- Authenticated, user-scoped account and transaction access
+- Account ownership validation
 - Transaction creation and retrieval
-- Transaction filtering and pagination
-- Financial analytics endpoints
-- Redis integration
-- PostgreSQL persistence with SQLAlchemy ORM
-- Health monitoring endpoints
-- Dockerized deployment
+- Search and filtering by transaction attributes
+- Pagination for transaction queries
+- Financial analytics including transaction totals, deposits, withdrawals, balances, and flagged transactions
+- Redis caching for per-user analytics with a 60-second TTL
+- PostgreSQL persistence using SQLAlchemy
+- Application and dependency health-check endpoints
+- Dockerized local and cloud deployment
 
 ## Tech Stack
 
