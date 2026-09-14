@@ -107,10 +107,35 @@ FinFlow was containerized with Docker and deployed to AWS using managed applicat
 
 During deployment, I troubleshot database connectivity, AWS security-group and networking configuration, application environment settings, and service-to-service communication between the API, PostgreSQL, and Redis.
 
-## Local Setup
+## Local Development
 
-Clone the repository:
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/mqazi3/finflow-api.git
 cd finflow-api
+```
+
+### 2. Configure environment variables
+
+Create a `.env` file with the required database, Redis, and authentication configuration.
+
+Do not commit credentials or secrets to source control.
+
+### 3. Start the application
+
+The project includes Docker configuration for running the API and its supporting services in containers.
+
+```bash
+docker compose up --build
+```
+
+### 4. Explore the API
+
+Once the application is running, FastAPI provides interactive API documentation at:
+
+```text
+http://localhost:8000/docs
+```
+
+Use the Swagger UI to register a user, authenticate, create accounts and transactions, query transaction data, and test analytics endpoints.
