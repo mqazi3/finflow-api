@@ -135,11 +135,10 @@ finflow-api/
 FinFlow uses JWT-based authentication to protect user data and API operations.
 
 - Passwords are hashed using bcrypt before storage
-- Successful login issues a JWT access token
+- Successful login issues a JWT bearer token
 - Protected endpoints resolve the authenticated user from the token
 - Account and transaction queries are scoped to the authenticated user
-- Account ownership is validated before user-specific operations
-- Unauthorized users cannot access another user's account data
+- User-specific transaction lookups return `404` when the transaction is missing or not owned by the current user
 
 ## Data Model & Caching
 
