@@ -83,6 +83,17 @@ FinFlow uses JWT-based authentication to protect user data and API operations.
 - Account ownership is validated before user-specific operations
 - Unauthorized users cannot access another user's account data
 
+## Data Model & Caching
+
+FinFlow uses a relational data model centered on users, accounts, and transactions.
+
+- Users own one or more financial accounts
+- Accounts contain transaction records
+- Transaction creation updates the associated account balance
+- PostgreSQL stores persistent application data through SQLAlchemy
+- Redis caches per-user analytics results
+- Cached analytics use a 60-second TTL to reduce repeated database work for frequently requested summaries
+
 ## Local Setup
 
 Clone the repository:
