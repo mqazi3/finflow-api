@@ -84,15 +84,51 @@ finflow-api/
 
 ## API Endpoints
 
+### Authentication
+
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/api/v1/register` | Register a new user |
-| POST | `/api/v1/login` | Authenticate a user and issue a JWT access token |
-| POST | `/api/v1/accounts` | Create an authenticated user's financial account |
-| POST | `/api/v1/transactions` | Create a transaction for a user-owned account |
-| GET | `/api/v1/transactions` | Query transactions with filtering and pagination |
-| GET | `/api/v1/analytics/transactions` | Retrieve user-scoped transaction analytics |
-| GET | `/health/full` | Check API, PostgreSQL, and Redis connectivity |
+| POST | `/api/v1/login` | Authenticate a user and issue a JWT bearer token |
+
+### Accounts
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/accounts/` | Create an account for the authenticated user |
+| GET | `/api/v1/accounts/` | Retrieve accounts belonging to the authenticated user |
+
+### Transactions
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/v1/transactions/` | Create a transaction |
+| GET | `/api/v1/transactions/` | Query user transactions with filtering, search, and pagination |
+| GET | `/api/v1/transactions/count` | Count transactions using optional category and search filters |
+| GET | `/api/v1/transactions/{transaction_id}` | Retrieve a specific user-owned transaction |
+| PUT | `/api/v1/transactions/{transaction_id}` | Update a transaction and recalculate its account balance |
+| DELETE | `/api/v1/transactions/{transaction_id}` | Delete a transaction and update its account balance |
+
+### Analytics
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/v1/analytics/transactions` | Retrieve transaction-level financial analytics |
+| GET | `/api/v1/analytics/categories` | Summarize transactions by category |
+| GET | `/api/v1/analytics/monthly` | Retrieve monthly analytics with optional date-range filtering |
+| GET | `/api/v1/analytics/merchants` | Summarize transaction activity by merchant |
+| GET | `/api/v1/analytics/top-merchants` | Retrieve top spending merchants |
+
+### Health & Service Information
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Service entry point and API metadata |
+| GET | `/info` | Application version, environment, and feature information |
+| GET | `/health` | Basic application health check |
+| GET | `/health/db` | PostgreSQL connectivity check |
+| GET | `/health/redis` | Redis connectivity check |
+| GET | `/health/full` | Combined application, PostgreSQL, and Redis health check |
 
 ## Authentication & Authorization
 
