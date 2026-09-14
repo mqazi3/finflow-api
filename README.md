@@ -94,6 +94,19 @@ FinFlow uses a relational data model centered on users, accounts, and transactio
 - Redis caches per-user analytics results
 - Cached analytics use a 60-second TTL to reduce repeated database work for frequently requested summaries
 
+## Cloud Deployment
+
+FinFlow was containerized with Docker and deployed to AWS using managed application, database, and caching services.
+
+- Docker image stored in Amazon ECR
+- FastAPI application deployed on Amazon ECS with Fargate
+- PostgreSQL database hosted on Amazon RDS
+- Redis cache hosted on Amazon ElastiCache
+- Application logs monitored through Amazon CloudWatch
+- Deployment required configuring service connectivity, environment variables, and network access between ECS, RDS, and ElastiCache
+
+During deployment, I troubleshot database connectivity, AWS security-group and networking configuration, application environment settings, and service-to-service communication between the API, PostgreSQL, and Redis.
+
 ## Local Setup
 
 Clone the repository:
