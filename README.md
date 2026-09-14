@@ -30,6 +30,7 @@ FastAPI API
 
 Docker Image -> Amazon ECR
 Application Logs -> Amazon CloudWatch
+```
 
 ## Features
 
