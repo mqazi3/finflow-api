@@ -48,17 +48,14 @@ Application Logs -> Amazon CloudWatch
 
 ## Tech Stack
 
-- Python
-- FastAPI
-- PostgreSQL
-- Redis
-- SQLAlchemy
-- Alembic
-- Docker
-- AWS ECS/Fargate
-- AWS RDS
-- AWS ECR
-- AWS CloudWatch
+| Category | Technologies |
+|---|---|
+| Language & API | Python, FastAPI |
+| Database | PostgreSQL, SQLAlchemy, Alembic |
+| Caching | Redis |
+| Authentication | JWT, bcrypt |
+| Containerization | Docker |
+| AWS | ECS/Fargate, ECR, RDS, ElastiCache, CloudWatch |
 
 ## API Endpoints
 
