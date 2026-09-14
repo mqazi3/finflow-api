@@ -147,7 +147,7 @@ FinFlow uses a relational data model centered on users, accounts, and transactio
 
 - Users own one or more financial accounts
 - Accounts contain transaction records
-- Transaction creation updates the associated account balance
+- Transaction creation validates account ownership, normalizes transaction amounts, updates the associated account balance, and invalidates cached analytics for that user
 - PostgreSQL stores persistent application data through SQLAlchemy
 - Redis caches per-user transaction analytics using keys scoped by user ID
 - Cached transaction analytics use a 60-second TTL to reduce repeated database queries
