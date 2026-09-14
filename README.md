@@ -163,7 +163,7 @@ FinFlow was containerized with Docker and deployed to AWS using managed applicat
 - Application logs monitored through Amazon CloudWatch
 - Deployment required configuring service connectivity, environment variables, and network access between ECS, RDS, and ElastiCache
 
-During deployment, I troubleshot database connectivity, AWS security-group and networking configuration, application environment settings, and service-to-service communication between the API, PostgreSQL, and Redis.
+Deployment troubleshooting included database connectivity, AWS security-group and networking configuration, application environment settings, and service-to-service communication between the API, PostgreSQL, and Redis.
 
 ## Local Development
 
