@@ -61,16 +61,25 @@ Application Logs -> Amazon CloudWatch
 
 ```text
 finflow-api/
+├── app/
+│   ├── dependencies/     # Shared FastAPI dependencies
+│   ├── models/           # SQLAlchemy database models
+│   ├── routes/           # API route definitions
+│   ├── schemas/          # Request and response schemas
+│   ├── services/         # Application and business logic
+│   ├── storage/          # Data storage functionality
+│   ├── auth.py           # Authentication and JWT utilities
+│   ├── cache.py          # Redis caching configuration
+│   ├── config.py         # Application configuration
+│   ├── database.py       # Database connection and session setup
+│   ├── logger.py         # Logging configuration
+│   └── main.py           # FastAPI application entry point
 ├── alembic/              # Database migration files
-├── app/                  # FastAPI application source code
-├── .dockerignore         # Docker build exclusions
 ├── .env.example          # Example environment configuration
-├── .gitignore            # Git exclusions
 ├── Dockerfile            # API container definition
-├── alembic.ini           # Alembic configuration
 ├── docker-compose.yml    # Local multi-container environment
-├── requirements.txt      # Python dependencies
-└── README.md             # Project documentation
+├── alembic.ini           # Alembic configuration
+└── requirements.txt      # Python dependencies
 ```
 
 ## API Endpoints
