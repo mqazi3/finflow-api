@@ -57,6 +57,22 @@ Application Logs -> Amazon CloudWatch
 | Containerization | Docker |
 | AWS | ECS/Fargate, ECR, RDS, ElastiCache, CloudWatch |
 
+## Project Structure
+
+```text
+finflow-api/
+├── alembic/              # Database migration files
+├── app/                  # FastAPI application source code
+├── .dockerignore         # Docker build exclusions
+├── .env.example          # Example environment configuration
+├── .gitignore            # Git exclusions
+├── Dockerfile            # API container definition
+├── alembic.ini           # Alembic configuration
+├── docker-compose.yml    # Local multi-container environment
+├── requirements.txt      # Python dependencies
+└── README.md             # Project documentation
+```
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
