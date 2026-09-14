@@ -72,6 +72,17 @@ Application Logs -> Amazon CloudWatch
 | GET | `/api/v1/analytics/transactions` | Retrieve user-scoped transaction analytics |
 | GET | `/health/full` | Check API, PostgreSQL, and Redis connectivity |
 
+## Authentication & Authorization
+
+FinFlow uses JWT-based authentication to protect user data and API operations.
+
+- Passwords are hashed using bcrypt before storage
+- Successful login issues a JWT access token
+- Protected endpoints resolve the authenticated user from the token
+- Account and transaction queries are scoped to the authenticated user
+- Account ownership is validated before user-specific operations
+- Unauthorized users cannot access another user's account data
+
 ## Local Setup
 
 Clone the repository:
