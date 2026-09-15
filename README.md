@@ -47,6 +47,14 @@ Application Logs -> Amazon CloudWatch
 - Application and dependency health-check endpoints
 - Dockerized local and cloud deployment
 
+## Engineering Highlights
+
+- Built 20+ API routes spanning authentication, account management, transaction CRUD, analytics, and service health
+- Enforced user-scoped data access across account and transaction operations
+- Implemented transaction filtering, search, pagination, and account-balance updates
+- Added Redis caching for per-user transaction analytics with cache invalidation on transaction creation
+- Deployed a containerized FastAPI service with PostgreSQL and Redis using AWS ECS/Fargate, RDS, ElastiCache, ECR, and CloudWatch
+
 ## Tech Stack
 
 | Category | Technologies |
