@@ -205,3 +205,7 @@ http://localhost:8000/docs
 ```
 
 Use the Swagger UI to register a user, authenticate, create accounts and transactions, query transaction data, and test analytics endpoints.
+
+## Project Status
+
+The AWS deployment is currently offline to avoid ongoing cloud infrastructure costs. The repository contains the application and deployment configuration used for the ECS/Fargate deployment.
