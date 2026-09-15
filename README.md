@@ -36,7 +36,6 @@ Application Logs -> Amazon CloudWatch
 
 - User registration and login with JWT-based authentication
 - Password hashing with bcrypt
-- Authenticated, user-scoped account and transaction access
 - User-scoped account and transaction operations with ownership checks
 - Transaction creation and retrieval
 - Search and filtering by transaction attributes
