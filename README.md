@@ -1,5 +1,7 @@
 # FinFlow API
 
+[![tests](https://github.com/mqazi3/finflow-api/actions/workflows/tests.yml/badge.svg)](https://github.com/mqazi3/finflow-api/actions/workflows/tests.yml)
+
 A cloud-deployed financial transaction backend built with Python, FastAPI, PostgreSQL, Redis, Docker, and AWS ECS/Fargate.
 
 FinFlow provides authenticated, user-scoped APIs for managing financial accounts and transactions, querying transaction data, and generating financial analytics. The application uses PostgreSQL for persistent storage and Redis for caching analytics results.
@@ -41,17 +43,22 @@ Application Logs -> Amazon CloudWatch
 - Search and filtering by transaction attributes
 - Pagination for transaction queries
 - Financial analytics including transaction totals, deposits, withdrawals, balances, and flagged transactions
+- Exact decimal money handling: amounts and balances stored as `NUMERIC(12, 2)`, never floats
 - Redis caching for per-user analytics with a 60-second TTL
 - PostgreSQL persistence using SQLAlchemy
 - Application and dependency health-check endpoints
 - Dockerized local and cloud deployment
+- Database schema managed by Alembic migrations, applied automatically on container startup
+- 47 automated tests run in GitHub Actions on every push
 
 ## Engineering Highlights
 
 - Built 20+ API routes spanning authentication, account management, transaction CRUD, analytics, and service health
 - Enforced user-scoped data access across account and transaction operations
 - Implemented transaction filtering, search, pagination, and account-balance updates
-- Added Redis caching for per-user transaction analytics with cache invalidation on transaction creation
+- Added Redis caching for per-user transaction analytics, invalidated on transaction create, update, and delete, with a database fallback when Redis is unavailable
+- Stored money as exact decimals and computed analytics with SQL aggregates rather than application-side loops
+- Wrote a pytest suite covering authentication, token forgery and expiry, cross-user data isolation, balance math, analytics, and health checks; CI runs it against PostgreSQL, verifies migrations match the models, and smoke-tests the full Docker Compose stack
 - Deployed a containerized FastAPI service with PostgreSQL and Redis using AWS ECS/Fargate, RDS, ElastiCache, ECR, and CloudWatch
 
 ## Tech Stack
@@ -62,6 +69,7 @@ Application Logs -> Amazon CloudWatch
 | Database | PostgreSQL, SQLAlchemy, Alembic |
 | Caching | Redis |
 | Authentication | JWT, bcrypt |
+| Testing & CI | pytest, GitHub Actions |
 | Containerization | Docker |
 | AWS | ECS/Fargate, ECR, RDS, ElastiCache, CloudWatch |
 
@@ -82,10 +90,14 @@ finflow-api/
 │   ├── logger.py         # Logging configuration
 │   └── main.py           # FastAPI application entry point
 ├── alembic/              # Database migration files
+├── tests/                # pytest suite
+├── .github/workflows/    # CI pipeline
 ├── .env.example          # Example environment configuration
 ├── Dockerfile            # API container definition
 ├── docker-compose.yml    # Local multi-container environment
 ├── alembic.ini           # Alembic configuration
+├── pytest.ini            # Test configuration
+├── requirements-dev.txt  # Test dependencies
 └── requirements.txt      # Python dependencies
 ```
 
@@ -142,7 +154,8 @@ finflow-api/
 FinFlow uses JWT-based authentication to protect user data and API operations.
 
 - Passwords are hashed using bcrypt before storage
-- Successful login issues a JWT bearer token
+- Successful login issues a JWT bearer token, signed with a secret loaded from the environment
+- The API refuses to start outside development without a `SECRET_KEY`
 - Protected endpoints resolve the authenticated user from the token
 - Account and transaction queries are scoped to the authenticated user
 - User-specific transaction lookups return `404` when the transaction is missing or not owned by the current user
@@ -154,7 +167,10 @@ FinFlow uses a relational data model centered on users, accounts, and transactio
 - Accounts are created with the authenticated user's ID and retrieved only within that user's scope
 - Accounts contain transaction records
 - Transaction creation validates account ownership, normalizes transaction amounts, updates the associated account balance, and invalidates cached analytics for that user
+- Updates and deletes reverse the original amount on the account balance and also invalidate cached analytics
+- Amounts and balances are `NUMERIC(12, 2)`; requests with more than two decimal places are rejected
 - PostgreSQL stores persistent application data through SQLAlchemy
+- Alembic migrations define the schema and run before the API starts
 - Redis caches per-user transaction analytics using keys scoped by user ID
 - Cached transaction analytics use a 60-second TTL to reduce repeated database queries
 
@@ -180,21 +196,17 @@ git clone https://github.com/mqazi3/finflow-api.git
 cd finflow-api
 ```
 
-### 2. Configure environment variables
-
-Create a `.env` file with the required database, Redis, and authentication configuration.
-
-Do not commit credentials or secrets to source control.
-
-### 3. Start the application
-
-The project includes Docker configuration for running the API and its supporting services in containers.
+### 2. Start the application
 
 ```bash
 docker compose up --build
 ```
 
-### 4. Explore the API
+`docker-compose.yml` supplies the database, Redis, and development settings, so no `.env` file is needed for Docker. The API container applies all database migrations before it starts.
+
+To run the API outside Docker, copy `.env.example` to `.env` and fill in real values. Do not commit credentials or secrets to source control.
+
+### 3. Explore the API
 
 Once the application is running, FastAPI provides interactive API documentation at:
 
@@ -203,6 +215,31 @@ http://localhost:8000/docs
 ```
 
 Use the Swagger UI to register a user, authenticate, create accounts and transactions, query transaction data, and test analytics endpoints.
+
+### Resetting the local database
+
+A local database created by an older version of FinFlow, before migrations ran on startup, has no migration history, and the API will fail to start against it. Delete it and start fresh (this removes local data only):
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+## Running Tests
+
+The test suite uses a throwaway SQLite database and an in-memory Redis, so it never touches your development data and needs no running services.
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+pytest
+```
+
+To run the tests against PostgreSQL, as CI does, set `TEST_DATABASE_URL` to an empty database before running `pytest`. The suite drops and recreates tables in that database.
+
+GitHub Actions runs two jobs on every push and pull request:
+
+- **test:** applies the migrations to an empty PostgreSQL database, runs `alembic check` to confirm they match the models, then runs the full pytest suite
+- **docker:** builds the image, starts the Docker Compose stack, and smoke-tests registration, login, transactions, and analytics against the running API
 
 ## Project Status
 
