@@ -1,31 +1,37 @@
-from datetime import date
-
-from app.schemas.analytics import MerchantSummaryResponse
-
-from sqlalchemy import extract
-from app.schemas.analytics import MonthlySummaryResponse
-
-from sqlalchemy import func
-from app.schemas.analytics import CategorySummaryResponse
-
 import json
+from datetime import date, timedelta
+
+from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
 
-from app.models.transaction import Transaction
-from app.models.account import Account
-from app.schemas.analytics import TransactionAnalyticsResponse
 from app.cache import redis_client
+from app.logger import logger
+from app.models.account import Account
+from app.models.transaction import Transaction
+from app.schemas.analytics import (
+    CategorySummaryResponse,
+    MerchantSummaryResponse,
+    MonthlySummaryResponse,
+    TopMerchantResponse,
+    TransactionAnalyticsResponse,
+)
+
+
+ANALYTICS_CACHE_TTL_SECONDS = 60
 
 
 def get_transaction_analytics(db: Session, user_id: int):
     cache_key = f"analytics:user:{user_id}"
 
-    cached_data = redis_client.get(cache_key)
+    # If Redis is down, fall back to the database instead of failing the request
+    try:
+        cached_data = redis_client.get(cache_key)
+    except Exception:
+        logger.warning("Redis unavailable; computing analytics from the database")
+        cached_data = None
 
     if cached_data:
-        return TransactionAnalyticsResponse(
-            **json.loads(cached_data)
-        )
+        return TransactionAnalyticsResponse(**json.loads(cached_data))
 
     transactions = (
         db.query(Transaction)
@@ -39,39 +45,25 @@ def get_transaction_analytics(db: Session, user_id: int):
         .all()
     )
 
-    total_transactions = len(transactions)
-
-    total_deposits = sum(
-        t.amount for t in transactions if t.amount > 0
-    )
-
-    total_withdrawals = sum(
-        abs(t.amount) for t in transactions if t.amount < 0
-    )
-
-    current_balance = sum(
-        account.balance for account in accounts
-    )
-
-    flagged_transactions = len(
-        [t for t in transactions if t.is_flagged]
-    )
-
     analytics = TransactionAnalyticsResponse(
-        total_transactions=total_transactions,
-        total_deposits=total_deposits,
-        total_withdrawals=total_withdrawals,
-        current_balance=current_balance,
-        flagged_transactions=flagged_transactions,
+        total_transactions=len(transactions),
+        total_deposits=sum(t.amount for t in transactions if t.amount > 0),
+        total_withdrawals=sum(abs(t.amount) for t in transactions if t.amount < 0),
+        current_balance=sum(account.balance for account in accounts),
+        flagged_transactions=sum(1 for t in transactions if t.is_flagged),
     )
 
-    redis_client.setex(
-        cache_key,
-        60,
-        analytics.model_dump_json()
-    )
+    try:
+        redis_client.setex(
+            cache_key,
+            ANALYTICS_CACHE_TTL_SECONDS,
+            analytics.model_dump_json()
+        )
+    except Exception:
+        logger.warning("Redis unavailable; analytics result not cached")
 
     return analytics
+
 
 def get_category_summary(db: Session, user_id: int):
     results = (
@@ -94,6 +86,7 @@ def get_category_summary(db: Session, user_id: int):
         for row in results
     ]
 
+
 def get_monthly_summary(
     db: Session,
     user_id: int,
@@ -111,7 +104,9 @@ def get_monthly_summary(
         query = query.filter(Transaction.created_at >= start_date)
 
     if end_date:
-        query = query.filter(Transaction.created_at <= end_date)
+        # created_at is a timestamp, so "<= end_date" would stop at midnight and
+        # drop the rest of that day. Compare against the start of the next day.
+        query = query.filter(Transaction.created_at < end_date + timedelta(days=1))
 
     results = (
         query
@@ -134,8 +129,6 @@ def get_monthly_summary(
         )
         for row in results
     ]
-
-from app.schemas.analytics import MerchantSummaryResponse
 
 
 def get_merchant_summary(db: Session, user_id: int):
@@ -160,7 +153,11 @@ def get_merchant_summary(db: Session, user_id: int):
         for row in results
     ]
 
+
 def get_top_spending_merchants(db: Session, user_id: int, limit: int = 5):
+    # Expenses are stored as negative amounts, so the most negative sum is the
+    # biggest spend. Match the category case-insensitively, the same way
+    # transaction creation decides whether an amount is an expense.
     results = (
         db.query(
             Transaction.merchant,
@@ -169,7 +166,7 @@ def get_top_spending_merchants(db: Session, user_id: int, limit: int = 5):
         )
         .filter(
             Transaction.user_id == user_id,
-            Transaction.category == "Expense"
+            func.lower(Transaction.category) == "expense"
         )
         .group_by(Transaction.merchant)
         .order_by(func.sum(Transaction.amount).asc())
@@ -178,10 +175,10 @@ def get_top_spending_merchants(db: Session, user_id: int, limit: int = 5):
     )
 
     return [
-        {
-            "merchant": row.merchant,
-            "total_spent": round(float(row.total_spent), 2),
-            "transaction_count": row.transaction_count
-        }
+        TopMerchantResponse(
+            merchant=row.merchant,
+            total_spent=round(abs(float(row.total_spent)), 2),
+            transaction_count=row.transaction_count
+        )
         for row in results
     ]

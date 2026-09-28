@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 import time
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -156,11 +156,14 @@ def database_health_check():
         }
 
     except Exception:
-        return {
-            "status": "unhealthy",
-            "database": "disconnected",
-            "environment": settings.environment,
-        }
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "unhealthy",
+                "database": "disconnected",
+                "environment": settings.environment,
+            },
+        )
 
     finally:
         db.close()
@@ -178,11 +181,14 @@ def redis_health_check():
         }
 
     except Exception:
-        return {
-            "status": "unhealthy",
-            "redis": "disconnected",
-            "environment": settings.environment,
-        }
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "unhealthy",
+                "redis": "disconnected",
+                "environment": settings.environment,
+            },
+        )
 
 
 @app.get("/health/full", tags=["Health"])
@@ -202,6 +208,8 @@ def full_health_check():
     except Exception:
         health_status["status"] = "unhealthy"
         health_status["database"] = "disconnected"
+    finally:
+        db.close()
 
     try:
         redis_client.ping()
@@ -209,8 +217,11 @@ def full_health_check():
         health_status["status"] = "unhealthy"
         health_status["redis"] = "disconnected"
 
-    finally:
-        db.close()
+    if health_status["status"] == "unhealthy":
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=health_status,
+        )
 
     return health_status
 

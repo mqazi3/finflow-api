@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.dependencies.auth import get_current_user
@@ -12,7 +12,8 @@ from app.schemas.analytics import (
     TransactionAnalyticsResponse,
     CategorySummaryResponse,
     MonthlySummaryResponse,
-    MerchantSummaryResponse
+    MerchantSummaryResponse,
+    TopMerchantResponse
 )
 
 from app.services.analytics_service import (
@@ -70,9 +71,9 @@ def get_merchant_analytics_route(
         user_id=current_user.id
     )
 
-@router.get("/top-merchants")
+@router.get("/top-merchants", response_model=list[TopMerchantResponse])
 def get_top_merchants_route(
-    limit: int = 5,
+    limit: int = Query(5, ge=1, le=50),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
