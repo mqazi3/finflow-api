@@ -1,8 +1,6 @@
-from datetime import datetime
-
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String
 
-from app.database import Base
+from app.database import Base, utc_now
 
 
 class Account(Base):
@@ -15,4 +13,4 @@ class Account(Base):
     account_type = Column(String, nullable=False)
     balance = Column(Numeric(12, 2), default=0)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)

@@ -1,8 +1,6 @@
-from datetime import datetime
-
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String
 
-from app.database import Base
+from app.database import Base, utc_now
 
 
 class Transaction(Base):
@@ -18,4 +16,4 @@ class Transaction(Base):
     description = Column(String, nullable=True)
 
     is_flagged = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -21,3 +23,11 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
+
+
+def utc_now() -> datetime:
+    """Current UTC time as a naive datetime, matching the existing columns.
+
+    Replaces datetime.utcnow(), which is deprecated since Python 3.12.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
