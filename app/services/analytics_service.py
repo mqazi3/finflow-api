@@ -1,7 +1,8 @@
 import json
 from datetime import date, timedelta
+from decimal import Decimal
 
-from sqlalchemy import extract, func
+from sqlalchemy import case, extract, func
 from sqlalchemy.orm import Session
 
 from app.cache import redis_client
@@ -18,6 +19,16 @@ from app.schemas.analytics import (
 
 
 ANALYTICS_CACHE_TTL_SECONDS = 60
+CENT = Decimal("0.01")
+
+
+def _money(value) -> Decimal:
+    """Normalize a database total to an exact amount in cents.
+
+    Postgres returns Decimal; SQLite (used by the tests) can return float.
+    Going through str() avoids binary float noise before rounding.
+    """
+    return Decimal(str(value or 0)).quantize(CENT)
 
 
 def get_transaction_analytics(db: Session, user_id: int):
@@ -33,24 +44,37 @@ def get_transaction_analytics(db: Session, user_id: int):
     if cached_data:
         return TransactionAnalyticsResponse(**json.loads(cached_data))
 
-    transactions = (
-        db.query(Transaction)
+    # Let the database do the counting and summing in one query instead of
+    # loading every transaction into Python
+    totals = (
+        db.query(
+            func.count(Transaction.id).label("total_transactions"),
+            func.sum(
+                case((Transaction.amount > 0, Transaction.amount), else_=0)
+            ).label("total_deposits"),
+            func.sum(
+                case((Transaction.amount < 0, -Transaction.amount), else_=0)
+            ).label("total_withdrawals"),
+            func.sum(
+                case((Transaction.is_flagged.is_(True), 1), else_=0)
+            ).label("flagged_transactions"),
+        )
         .filter(Transaction.user_id == user_id)
-        .all()
+        .one()
     )
 
-    accounts = (
-        db.query(Account)
+    current_balance = (
+        db.query(func.sum(Account.balance))
         .filter(Account.user_id == user_id)
-        .all()
+        .scalar()
     )
 
     analytics = TransactionAnalyticsResponse(
-        total_transactions=len(transactions),
-        total_deposits=sum(t.amount for t in transactions if t.amount > 0),
-        total_withdrawals=sum(abs(t.amount) for t in transactions if t.amount < 0),
-        current_balance=sum(account.balance for account in accounts),
-        flagged_transactions=sum(1 for t in transactions if t.is_flagged),
+        total_transactions=totals.total_transactions,
+        total_deposits=_money(totals.total_deposits),
+        total_withdrawals=_money(totals.total_withdrawals),
+        current_balance=_money(current_balance),
+        flagged_transactions=int(totals.flagged_transactions or 0),
     )
 
     try:
@@ -80,7 +104,7 @@ def get_category_summary(db: Session, user_id: int):
     return [
         CategorySummaryResponse(
             category=row.category,
-            total_amount=row.total_amount,
+            total_amount=_money(row.total_amount),
             transaction_count=row.transaction_count
         )
         for row in results
@@ -124,7 +148,7 @@ def get_monthly_summary(
     return [
         MonthlySummaryResponse(
             month=f"{int(row.year)}-{int(row.month):02d}",
-            total_amount=row.total_amount,
+            total_amount=_money(row.total_amount),
             transaction_count=row.transaction_count
         )
         for row in results
@@ -147,7 +171,7 @@ def get_merchant_summary(db: Session, user_id: int):
     return [
         MerchantSummaryResponse(
             merchant=row.merchant,
-            total_amount=row.total_amount,
+            total_amount=_money(row.total_amount),
             transaction_count=row.transaction_count
         )
         for row in results
@@ -177,7 +201,7 @@ def get_top_spending_merchants(db: Session, user_id: int, limit: int = 5):
     return [
         TopMerchantResponse(
             merchant=row.merchant,
-            total_spent=abs(row.total_spent),
+            total_spent=abs(_money(row.total_spent)),
             transaction_count=row.transaction_count
         )
         for row in results
