@@ -48,3 +48,53 @@ jobs:
 
       - name: Run tests
         run: pytest -v
+
+  docker:
+    # Build the real image and start the full stack the way a developer would,
+    # then hit the running API. This proves the container applies migrations
+    # on startup and serves requests against real Postgres and Redis.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start the stack
+        run: docker compose up -d --build
+
+      - name: Wait for the API to become healthy
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health/full; then exit 0; fi
+            sleep 2
+          done
+          docker compose logs api
+          exit 1
+
+      - name: Smoke-test the API
+        run: |
+          set -e
+          API=http://localhost:8000/api/v1
+          curl -sf -X POST $API/register -H 'Content-Type: application/json' \
+            -d '{"username":"smoketest","password":"password123"}'
+          TOKEN=$(curl -sf -X POST $API/login -d 'username=smoketest&password=password123' \
+            | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
+          AUTH="Authorization: Bearer $TOKEN"
+          curl -sf -X POST $API/accounts/ -H "$AUTH" -H 'Content-Type: application/json' \
+            -d '{"name":"Checking","account_type":"checking","balance":1000}'
+          curl -sf -X POST $API/transactions/ -H "$AUTH" -H 'Content-Type: application/json' \
+            -d '{"account_id":1,"amount":12000,"merchant":"Apple","category":"Expense","description":"Laptop"}'
+          ANALYTICS=$(curl -sf $API/analytics/transactions -H "$AUTH")
+          echo "$ANALYTICS"
+          echo "$ANALYTICS" | python3 -c '
+          import sys, json
+          a = json.load(sys.stdin)
+          assert a["flagged_transactions"] == 1, a
+          assert a["current_balance"] == -11000, a
+          '
+
+      - name: Migrations are recorded in the database
+        run: docker compose exec -T api alembic current | grep "(head)"
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs

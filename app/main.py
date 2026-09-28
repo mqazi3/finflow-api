@@ -8,12 +8,8 @@ from sqlalchemy import text
 
 from app.cache import redis_client
 from app.config import settings
-from app.database import Base, engine, SessionLocal
+from app.database import SessionLocal
 from app.logger import logger
-
-from app.models.account import Account
-from app.models.transaction import Transaction
-from app.models.user import User
 
 from app.routes.accounts import router as accounts_router
 from app.routes.analytics import router as analytics_router
@@ -27,13 +23,8 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"API Version: {settings.app_version}")
 
-    try:
-        logger.info("Creating database tables if they do not exist...")
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database table check completed.")
-    except Exception:
-        logger.exception("Database table creation failed.")
-
+    # The schema is managed by Alembic migrations, which run before the
+    # server starts (see the Dockerfile CMD), not by the application itself.
     yield
 
     logger.info("Shutting down FinFlow API...")
