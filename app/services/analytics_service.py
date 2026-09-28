@@ -80,7 +80,7 @@ def get_category_summary(db: Session, user_id: int):
     return [
         CategorySummaryResponse(
             category=row.category,
-            total_amount=round(float(row.total_amount), 2),
+            total_amount=row.total_amount,
             transaction_count=row.transaction_count
         )
         for row in results
@@ -124,7 +124,7 @@ def get_monthly_summary(
     return [
         MonthlySummaryResponse(
             month=f"{int(row.year)}-{int(row.month):02d}",
-            total_amount=round(float(row.total_amount), 2),
+            total_amount=row.total_amount,
             transaction_count=row.transaction_count
         )
         for row in results
@@ -147,7 +147,7 @@ def get_merchant_summary(db: Session, user_id: int):
     return [
         MerchantSummaryResponse(
             merchant=row.merchant,
-            total_amount=round(float(row.total_amount), 2),
+            total_amount=row.total_amount,
             transaction_count=row.transaction_count
         )
         for row in results
@@ -177,7 +177,7 @@ def get_top_spending_merchants(db: Session, user_id: int, limit: int = 5):
     return [
         TopMerchantResponse(
             merchant=row.merchant,
-            total_spent=round(abs(float(row.total_spent)), 2),
+            total_spent=abs(row.total_spent),
             transaction_count=row.transaction_count
         )
         for row in results
