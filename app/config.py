@@ -14,7 +14,7 @@ class Settings:
     )
     environment: str = os.getenv("ENVIRONMENT", "development")
     app_version: str = os.getenv("APP_VERSION", "1.0.0")
-    debug: bool = os.getenv("DEBUG", "True") == "True"
+    debug: bool = os.getenv("DEBUG", "False").lower() == "true"
     cors_origins: list[str] = os.getenv(
         "CORS_ORIGINS",
         "http://localhost:3000,http://127.0.0.1:3000"
@@ -23,3 +23,8 @@ class Settings:
 
 
 settings = Settings()
+
+# Refuse to start outside development with the placeholder signing key.
+# Anyone who knows the key can forge a login token for any user.
+if settings.environment != "development" and settings.secret_key == "dev-secret-key":
+    raise RuntimeError("SECRET_KEY must be set outside development")

@@ -75,7 +75,6 @@ finflow-api/
 │   ├── routes/           # API route definitions
 │   ├── schemas/          # Request and response schemas
 │   ├── services/         # Application and business logic
-│   ├── storage/          # Data storage functionality
 │   ├── auth.py           # Authentication and JWT utilities
 │   ├── cache.py          # Redis caching configuration
 │   ├── config.py         # Application configuration
