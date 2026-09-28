@@ -188,3 +188,38 @@ def test_pagination_limits_are_validated(client, user):
     assert client.get(f"{API}/transactions/", params={"limit": 0}, headers=headers).status_code == 422
     assert client.get(f"{API}/transactions/", params={"limit": 101}, headers=headers).status_code == 422
     assert client.get(f"{API}/transactions/", params={"skip": -1}, headers=headers).status_code == 422
+
+
+def test_amounts_are_exact_to_the_cent(client):
+    headers = register_and_login(client, "alice")
+    account = create_account(client, headers, balance=0)
+
+    # With floats, 0.1 + 0.2 is 0.30000000000000004
+    create_transaction(client, headers, account["id"], 0.10, category="Income")
+    create_transaction(client, headers, account["id"], 0.20, category="Income")
+
+    assert get_balance(client, headers, account["id"]) == 0.3
+
+    analytics = client.get(f"{API}/analytics/transactions", headers=headers).json()
+    assert analytics["total_deposits"] == 0.3
+
+
+def test_amounts_with_more_than_two_decimals_are_rejected(client, user):
+    headers, account_id = user
+
+    response = client.post(
+        f"{API}/transactions/",
+        json={"account_id": account_id, "amount": 10.005, "merchant": "X", "category": "Expense"},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_amounts_are_returned_as_json_numbers(client, user):
+    headers, account_id = user
+
+    transaction = create_transaction(client, headers, account_id, 84.73)
+
+    assert transaction["amount"] == -84.73
+    assert isinstance(transaction["amount"], float)

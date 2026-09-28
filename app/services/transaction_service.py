@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -10,7 +12,7 @@ from app.models.transaction import Transaction
 FLAG_THRESHOLD = 10000
 
 
-def _normalize_amount(amount: float, category: str) -> float:
+def _normalize_amount(amount: Decimal, category: str) -> Decimal:
     """Expenses are stored as negative amounts; everything else as positive."""
     raw_amount = abs(amount)
     return -raw_amount if category.lower() == "expense" else raw_amount

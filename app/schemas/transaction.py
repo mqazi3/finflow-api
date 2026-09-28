@@ -1,17 +1,13 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
+
+from app.schemas.money import Money, MoneyIn
 
 
 class TransactionCreate(BaseModel):
-    account_id: int
-    amount: float
-    merchant: str
-    category: str
-    description: str | None = None
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "account_id": 1,
                 "amount": 84.73,
@@ -20,30 +16,32 @@ class TransactionCreate(BaseModel):
                 "description": "Office supplies and cables"
             }
         }
+    )
+
+    account_id: int
+    amount: MoneyIn
+    merchant: str
+    category: str
+    description: str | None = None
 
 
 class TransactionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     account_id: int
-    amount: float
+    amount: Money
     merchant: str
     category: str
     description: str | None = None
     is_flagged: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
 
 class TransactionUpdate(BaseModel):
-    amount: float
-    merchant: str
-    category: str
-    description: str | None = None
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "amount": 95.50,
                 "merchant": "Target",
@@ -51,3 +49,9 @@ class TransactionUpdate(BaseModel):
                 "description": "Household supplies"
             }
         }
+    )
+
+    amount: MoneyIn
+    merchant: str
+    category: str
+    description: str | None = None

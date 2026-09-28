@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -40,8 +41,8 @@ def get_transactions_route(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     category: Optional[str] = None,
-    min_amount: Optional[float] = None,
-    max_amount: Optional[float] = None,
+    min_amount: Optional[Decimal] = None,
+    max_amount: Optional[Decimal] = None,
     search: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
