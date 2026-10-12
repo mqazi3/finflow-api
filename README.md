@@ -44,6 +44,8 @@ Docker Image -> Amazon ECR
 Application Logs -> Amazon CloudWatch
 ```
 
+Locally, `docker compose up --build` runs the same API with PostgreSQL and Redis containers in place of RDS and ElastiCache.
+
 ## Features
 
 - User registration and login with JWT-based authentication
@@ -57,7 +59,7 @@ Application Logs -> Amazon CloudWatch
 - Redis caching for per-user analytics with a 60-second TTL
 - PostgreSQL persistence using SQLAlchemy
 - Application and dependency health-check endpoints
-- Dockerized local and cloud deployment
+- Runs locally as a Docker Compose stack (API, PostgreSQL, Redis); previously deployed to AWS ECS/Fargate
 - Database schema managed by Alembic migrations, applied automatically on container startup
 - 47 automated tests run in GitHub Actions on every push
 
@@ -90,7 +92,7 @@ Application Logs -> Amazon CloudWatch
 | Authentication | JWT, bcrypt |
 | Testing & CI | pytest, GitHub Actions |
 | Containerization | Docker |
-| AWS | ECS/Fargate, ECR, RDS, ElastiCache, CloudWatch |
+| AWS (previous deployment) | ECS/Fargate, ECR, RDS, ElastiCache, CloudWatch |
 
 ## Project Structure
 
@@ -194,15 +196,15 @@ FinFlow uses a relational data model centered on users, accounts, and transactio
 - Redis caches per-user transaction analytics using keys scoped by user ID
 - Cached transaction analytics use a 60-second TTL to reduce repeated database queries
 
-## Cloud Deployment
+## Cloud Deployment (offline)
 
-FinFlow was containerized with Docker and deployed to AWS using managed application, database, and caching services.
+FinFlow was containerized with Docker and deployed to AWS using managed application, database, and caching services. The deployment is offline now; see [Project Status](#project-status).
 
-- Docker image stored in Amazon ECR
-- FastAPI application deployed on Amazon ECS with Fargate
-- PostgreSQL database hosted on Amazon RDS
-- Redis cache hosted on Amazon ElastiCache
-- Application logs monitored through Amazon CloudWatch
+- The Docker image was stored in Amazon ECR
+- The FastAPI application ran on Amazon ECS with Fargate
+- PostgreSQL was hosted on Amazon RDS
+- Redis was hosted on Amazon ElastiCache
+- Application logs went to Amazon CloudWatch
 - Deployment required configuring service connectivity, environment variables, and network access between ECS, RDS, and ElastiCache
 
 Deployment troubleshooting included database connectivity, AWS security-group and networking configuration, application environment settings, and service-to-service communication between the API, PostgreSQL, and Redis.
