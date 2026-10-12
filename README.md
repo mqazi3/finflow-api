@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/mqazi3/finflow-api/actions/workflows/tests.yml/badge.svg)](https://github.com/mqazi3/finflow-api/actions/workflows/tests.yml)
 
-A cloud-deployed financial transaction backend built with Python, FastAPI, PostgreSQL, Redis, Docker, and AWS ECS/Fargate.
+A financial transaction backend built with Python, FastAPI, PostgreSQL, Redis, and Docker, previously deployed on AWS ECS/Fargate.
 
 FinFlow provides authenticated, user-scoped APIs for managing financial accounts and transactions, querying transaction data, and generating financial analytics. The application uses PostgreSQL for persistent storage and Redis for caching analytics results.
 
@@ -18,7 +18,7 @@ Transaction analytics for a demo user with five transactions, including one flag
 
 ## Architecture
 
-FinFlow uses a containerized backend architecture deployed on AWS:
+FinFlow used this containerized architecture when it was deployed on AWS:
 
 - **API:** FastAPI application running in Docker on AWS ECS/Fargate
 - **Database:** PostgreSQL hosted on Amazon RDS
@@ -63,13 +63,22 @@ Application Logs -> Amazon CloudWatch
 
 ## Engineering Highlights
 
-- Built 20+ API routes spanning authentication, account management, transaction CRUD, analytics, and service health
+- Built 21 API routes spanning authentication, account management, transaction CRUD, analytics, and service health
 - Enforced user-scoped data access across account and transaction operations
 - Implemented transaction filtering, search, pagination, and account-balance updates
 - Added Redis caching for per-user transaction analytics, invalidated on transaction create, update, and delete, with a database fallback when Redis is unavailable
 - Stored money as exact decimals and computed analytics with SQL aggregates rather than application-side loops
 - Wrote a pytest suite covering authentication, token forgery and expiry, cross-user data isolation, balance math, analytics, and health checks; CI runs it against PostgreSQL, verifies migrations match the models, and smoke-tests the full Docker Compose stack
 - Deployed a containerized FastAPI service with PostgreSQL and Redis using AWS ECS/Fargate, RDS, ElastiCache, ECR, and CloudWatch
+
+## Design Decisions
+
+- **Exact decimals for money.** Amounts and balances are `NUMERIC(12, 2)` in PostgreSQL and `Decimal` in Python. Binary floats can't represent most cent values exactly, so rounding errors build up across sums.
+- **Analytics in SQL.** Totals, category, monthly, and merchant summaries are SQL aggregates, so the database does the work in one query instead of loading every row into Python.
+- **Cache invalidation on every write.** Analytics are cached per user for 60 seconds. Creating, updating, or deleting a transaction deletes that user's cache key, so results are never stale after a change. If Redis is down, the API reads from the database instead of failing.
+- **Alembic as the only schema source.** The app never calls `create_all`. CI runs `alembic check` to fail the build if the models and migrations drift apart.
+- **PyJWT for tokens.** python-jose is unmaintained; PyJWT is the maintained standard. The signing key, algorithm, and expiry all come from settings, and the app refuses to start outside development without a `SECRET_KEY`.
+- **Two CI jobs.** The pytest job proves the code is correct against real PostgreSQL; the Docker Compose smoke test proves the real stack starts and serves requests.
 
 ## Tech Stack
 
@@ -254,4 +263,4 @@ GitHub Actions runs two jobs on every push and pull request:
 
 ## Project Status
 
-The AWS deployment is currently offline to avoid ongoing cloud infrastructure costs. The repository contains the application and deployment configuration used for the ECS/Fargate deployment.
+The AWS deployment is offline to avoid ongoing cloud costs; the AWS resources have been deleted. The AWS setup was configured by hand in the console, so this repository contains the application, Dockerfile, and Docker Compose stack, but no infrastructure-as-code. Everything runs locally with `docker compose up --build`. For an infrastructure-as-code version (Terraform, CI/CD deploys through GitHub OIDC), see [DocSearch](https://github.com/mqazi3/docsearch-api).
