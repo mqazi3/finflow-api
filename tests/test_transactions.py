@@ -65,9 +65,7 @@ def test_large_transactions_are_flagged(client, user):
 def test_description_is_saved(client, user):
     headers, account_id = user
 
-    created = create_transaction(
-        client, headers, account_id, 20, description="Office supplies"
-    )
+    created = create_transaction(client, headers, account_id, 20, description="Office supplies")
     fetched = client.get(f"{API}/transactions/{created['id']}", headers=headers).json()
 
     assert fetched["description"] == "Office supplies"
@@ -171,9 +169,7 @@ def test_pagination_returns_newest_first(client, user):
     for i in range(5):
         create_transaction(client, headers, account_id, 10, merchant=f"M{i}")
 
-    first_page = client.get(
-        f"{API}/transactions/", params={"limit": 2}, headers=headers
-    ).json()
+    first_page = client.get(f"{API}/transactions/", params={"limit": 2}, headers=headers).json()
     second_page = client.get(
         f"{API}/transactions/", params={"skip": 2, "limit": 2}, headers=headers
     ).json()
@@ -185,9 +181,16 @@ def test_pagination_returns_newest_first(client, user):
 def test_pagination_limits_are_validated(client, user):
     headers, _ = user
 
-    assert client.get(f"{API}/transactions/", params={"limit": 0}, headers=headers).status_code == 422
-    assert client.get(f"{API}/transactions/", params={"limit": 101}, headers=headers).status_code == 422
-    assert client.get(f"{API}/transactions/", params={"skip": -1}, headers=headers).status_code == 422
+    assert (
+        client.get(f"{API}/transactions/", params={"limit": 0}, headers=headers).status_code == 422
+    )
+    assert (
+        client.get(f"{API}/transactions/", params={"limit": 101}, headers=headers).status_code
+        == 422
+    )
+    assert (
+        client.get(f"{API}/transactions/", params={"skip": -1}, headers=headers).status_code == 422
+    )
 
 
 def test_amounts_are_exact_to_the_cent(client):

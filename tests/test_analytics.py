@@ -3,7 +3,6 @@ from datetime import date, datetime, timedelta
 import pytest
 
 from app.models.transaction import Transaction
-
 from tests.helpers import (
     API,
     create_account,
@@ -97,7 +96,11 @@ def test_category_and_merchant_summaries(client, user):
         row["category"]: row
         for row in client.get(f"{API}/analytics/categories", headers=headers).json()
     }
-    assert categories["Expense"] == {"category": "Expense", "total_amount": -50, "transaction_count": 2}
+    assert categories["Expense"] == {
+        "category": "Expense",
+        "total_amount": -50,
+        "transaction_count": 2,
+    }
     assert categories["Income"]["total_amount"] == 500
 
     merchants = client.get(f"{API}/analytics/merchants", headers=headers).json()
@@ -112,9 +115,7 @@ def test_top_merchants_are_positive_sorted_and_limited(client, user):
     create_transaction(client, headers, account_id, 90, merchant="Target", category="EXPENSE")
     create_transaction(client, headers, account_id, 5000, merchant="Employer", category="Income")
 
-    response = client.get(
-        f"{API}/analytics/top-merchants", params={"limit": 2}, headers=headers
-    )
+    response = client.get(f"{API}/analytics/top-merchants", params={"limit": 2}, headers=headers)
 
     assert response.status_code == 200
     assert response.json() == [
@@ -126,9 +127,7 @@ def test_top_merchants_are_positive_sorted_and_limited(client, user):
 def test_top_merchants_limit_is_validated(client, user):
     headers, _ = user
 
-    response = client.get(
-        f"{API}/analytics/top-merchants", params={"limit": 0}, headers=headers
-    )
+    response = client.get(f"{API}/analytics/top-merchants", params={"limit": 0}, headers=headers)
 
     assert response.status_code == 422
 
@@ -151,7 +150,9 @@ def test_monthly_summary_date_filters(client, user, db_session):
         return response.json()
 
     # end_date is inclusive: a transaction at 23:00 on the end date counts
-    this_month = monthly({"start_date": date.today().isoformat(), "end_date": date.today().isoformat()})
+    this_month = monthly(
+        {"start_date": date.today().isoformat(), "end_date": date.today().isoformat()}
+    )
     assert this_month == [
         {"month": late_today.strftime("%Y-%m"), "total_amount": -100, "transaction_count": 1}
     ]

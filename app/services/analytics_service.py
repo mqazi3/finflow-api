@@ -17,7 +17,6 @@ from app.schemas.analytics import (
     TransactionAnalyticsResponse,
 )
 
-
 ANALYTICS_CACHE_TTL_SECONDS = 60
 CENT = Decimal("0.01")
 
@@ -49,24 +48,22 @@ def get_transaction_analytics(db: Session, user_id: int):
     totals = (
         db.query(
             func.count(Transaction.id).label("total_transactions"),
-            func.sum(
-                case((Transaction.amount > 0, Transaction.amount), else_=0)
-            ).label("total_deposits"),
-            func.sum(
-                case((Transaction.amount < 0, -Transaction.amount), else_=0)
-            ).label("total_withdrawals"),
-            func.sum(
-                case((Transaction.is_flagged.is_(True), 1), else_=0)
-            ).label("flagged_transactions"),
+            func.sum(case((Transaction.amount > 0, Transaction.amount), else_=0)).label(
+                "total_deposits"
+            ),
+            func.sum(case((Transaction.amount < 0, -Transaction.amount), else_=0)).label(
+                "total_withdrawals"
+            ),
+            func.sum(case((Transaction.is_flagged.is_(True), 1), else_=0)).label(
+                "flagged_transactions"
+            ),
         )
         .filter(Transaction.user_id == user_id)
         .one()
     )
 
     current_balance = (
-        db.query(func.sum(Account.balance))
-        .filter(Account.user_id == user_id)
-        .scalar()
+        db.query(func.sum(Account.balance)).filter(Account.user_id == user_id).scalar()
     )
 
     analytics = TransactionAnalyticsResponse(
@@ -78,11 +75,7 @@ def get_transaction_analytics(db: Session, user_id: int):
     )
 
     try:
-        redis_client.setex(
-            cache_key,
-            ANALYTICS_CACHE_TTL_SECONDS,
-            analytics.model_dump_json()
-        )
+        redis_client.setex(cache_key, ANALYTICS_CACHE_TTL_SECONDS, analytics.model_dump_json())
     except Exception:
         logger.warning("Redis unavailable; analytics result not cached")
 
@@ -94,7 +87,7 @@ def get_category_summary(db: Session, user_id: int):
         db.query(
             Transaction.category,
             func.sum(Transaction.amount).label("total_amount"),
-            func.count(Transaction.id).label("transaction_count")
+            func.count(Transaction.id).label("transaction_count"),
         )
         .filter(Transaction.user_id == user_id)
         .group_by(Transaction.category)
@@ -105,23 +98,20 @@ def get_category_summary(db: Session, user_id: int):
         CategorySummaryResponse(
             category=row.category,
             total_amount=_money(row.total_amount),
-            transaction_count=row.transaction_count
+            transaction_count=row.transaction_count,
         )
         for row in results
     ]
 
 
 def get_monthly_summary(
-    db: Session,
-    user_id: int,
-    start_date: date | None = None,
-    end_date: date | None = None
+    db: Session, user_id: int, start_date: date | None = None, end_date: date | None = None
 ):
     query = db.query(
         extract("year", Transaction.created_at).label("year"),
         extract("month", Transaction.created_at).label("month"),
         func.sum(Transaction.amount).label("total_amount"),
-        func.count(Transaction.id).label("transaction_count")
+        func.count(Transaction.id).label("transaction_count"),
     ).filter(Transaction.user_id == user_id)
 
     if start_date:
@@ -133,15 +123,10 @@ def get_monthly_summary(
         query = query.filter(Transaction.created_at < end_date + timedelta(days=1))
 
     results = (
-        query
-        .group_by(
-            extract("year", Transaction.created_at),
-            extract("month", Transaction.created_at)
+        query.group_by(
+            extract("year", Transaction.created_at), extract("month", Transaction.created_at)
         )
-        .order_by(
-            extract("year", Transaction.created_at),
-            extract("month", Transaction.created_at)
-        )
+        .order_by(extract("year", Transaction.created_at), extract("month", Transaction.created_at))
         .all()
     )
 
@@ -149,7 +134,7 @@ def get_monthly_summary(
         MonthlySummaryResponse(
             month=f"{int(row.year)}-{int(row.month):02d}",
             total_amount=_money(row.total_amount),
-            transaction_count=row.transaction_count
+            transaction_count=row.transaction_count,
         )
         for row in results
     ]
@@ -160,7 +145,7 @@ def get_merchant_summary(db: Session, user_id: int):
         db.query(
             Transaction.merchant,
             func.sum(Transaction.amount).label("total_amount"),
-            func.count(Transaction.id).label("transaction_count")
+            func.count(Transaction.id).label("transaction_count"),
         )
         .filter(Transaction.user_id == user_id)
         .group_by(Transaction.merchant)
@@ -172,7 +157,7 @@ def get_merchant_summary(db: Session, user_id: int):
         MerchantSummaryResponse(
             merchant=row.merchant,
             total_amount=_money(row.total_amount),
-            transaction_count=row.transaction_count
+            transaction_count=row.transaction_count,
         )
         for row in results
     ]
@@ -186,12 +171,9 @@ def get_top_spending_merchants(db: Session, user_id: int, limit: int = 5):
         db.query(
             Transaction.merchant,
             func.sum(Transaction.amount).label("total_spent"),
-            func.count(Transaction.id).label("transaction_count")
+            func.count(Transaction.id).label("transaction_count"),
         )
-        .filter(
-            Transaction.user_id == user_id,
-            func.lower(Transaction.category) == "expense"
-        )
+        .filter(Transaction.user_id == user_id, func.lower(Transaction.category) == "expense")
         .group_by(Transaction.merchant)
         .order_by(func.sum(Transaction.amount).asc())
         .limit(limit)
@@ -202,7 +184,7 @@ def get_top_spending_merchants(db: Session, user_id: int, limit: int = 5):
         TopMerchantResponse(
             merchant=row.merchant,
             total_spent=abs(_money(row.total_spent)),
-            transaction_count=row.transaction_count
+            transaction_count=row.transaction_count,
         )
         for row in results
     ]

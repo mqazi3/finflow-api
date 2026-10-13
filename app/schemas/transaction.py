@@ -13,7 +13,7 @@ class TransactionCreate(BaseModel):
                 "amount": 84.73,
                 "merchant": "Amazon",
                 "category": "Expense",
-                "description": "Office supplies and cables"
+                "description": "Office supplies and cables",
             }
         }
     )
@@ -46,7 +46,7 @@ class TransactionUpdate(BaseModel):
                 "amount": 95.50,
                 "merchant": "Target",
                 "category": "Expense",
-                "description": "Household supplies"
+                "description": "Household supplies",
             }
         }
     )

@@ -52,9 +52,7 @@ def test_cannot_update_another_users_transaction(client):
     )
 
     assert response.status_code == 404
-    unchanged = client.get(
-        f"{API}/transactions/{transaction['id']}", headers=alice
-    ).json()
+    unchanged = client.get(f"{API}/transactions/{transaction['id']}", headers=alice).json()
     assert unchanged["merchant"] == "Store"
     assert get_balance(client, alice, account["id"]) == 900
 

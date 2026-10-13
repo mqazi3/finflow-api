@@ -8,7 +8,6 @@ from app.logger import logger
 from app.models.account import Account
 from app.models.transaction import Transaction
 
-
 FLAG_THRESHOLD = 10000
 
 
@@ -33,45 +32,27 @@ def _invalidate_analytics_cache(user_id: int) -> None:
 def _get_user_transaction(db: Session, transaction_id: int, user_id: int) -> Transaction:
     transaction = (
         db.query(Transaction)
-        .filter(
-            Transaction.id == transaction_id,
-            Transaction.user_id == user_id
-        )
+        .filter(Transaction.id == transaction_id, Transaction.user_id == user_id)
         .first()
     )
 
     if transaction is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Transaction not found"
-        )
+        raise HTTPException(status_code=404, detail="Transaction not found")
 
     return transaction
 
 
 def _get_user_account(db: Session, account_id: int, user_id: int) -> Account | None:
-    return (
-        db.query(Account)
-        .filter(
-            Account.id == account_id,
-            Account.user_id == user_id
-        )
-        .first()
-    )
+    return db.query(Account).filter(Account.id == account_id, Account.user_id == user_id).first()
 
 
 def create_transaction(db: Session, transaction_data, user_id: int):
     account = _get_user_account(db, transaction_data.account_id, user_id)
 
     if account is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Account not found for this user"
-        )
+        raise HTTPException(status_code=404, detail="Account not found for this user")
 
-    normalized_amount = _normalize_amount(
-        transaction_data.amount, transaction_data.category
-    )
+    normalized_amount = _normalize_amount(transaction_data.amount, transaction_data.category)
 
     transaction = Transaction(
         user_id=user_id,
@@ -80,7 +61,7 @@ def create_transaction(db: Session, transaction_data, user_id: int):
         merchant=transaction_data.merchant,
         category=transaction_data.category,
         description=transaction_data.description,
-        is_flagged=abs(normalized_amount) > FLAG_THRESHOLD
+        is_flagged=abs(normalized_amount) > FLAG_THRESHOLD,
     )
 
     account.balance = account.balance + normalized_amount
