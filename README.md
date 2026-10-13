@@ -90,7 +90,7 @@ Locally, `docker compose up --build` runs the same API with PostgreSQL and Redis
 | Database | PostgreSQL, SQLAlchemy, Alembic |
 | Caching | Redis |
 | Authentication | JWT, bcrypt |
-| Testing & CI | pytest, GitHub Actions |
+| Testing & CI | pytest, GitHub Actions, ruff |
 | Containerization | Docker |
 | AWS (previous deployment) | ECS/Fargate, ECR, RDS, ElastiCache, CloudWatch |
 
@@ -119,6 +119,7 @@ finflow-api/
 ├── docker-compose.yml    # Local multi-container environment
 ├── alembic.ini           # Alembic configuration
 ├── pytest.ini            # Test configuration
+├── ruff.toml             # Lint and format settings
 ├── requirements-dev.txt  # Test dependencies
 └── requirements.txt      # Python dependencies
 ```
@@ -258,9 +259,16 @@ pytest
 
 To run the tests against PostgreSQL, as CI does, set `TEST_DATABASE_URL` to an empty database before running `pytest`. The suite drops and recreates tables in that database.
 
+To lint and format-check locally, as CI does:
+
+```bash
+ruff check .
+ruff format --check .
+```
+
 GitHub Actions runs two jobs on every push and pull request:
 
-- **test:** applies the migrations to an empty PostgreSQL database, runs `alembic check` to confirm they match the models, then runs the full pytest suite
+- **test:** lints and format-checks the code with ruff, applies the migrations to an empty PostgreSQL database, runs `alembic check` to confirm they match the models, then runs the full pytest suite
 - **docker:** builds the image, starts the Docker Compose stack, and smoke-tests registration, login, transactions, and analytics against the running API
 
 ## Project Status

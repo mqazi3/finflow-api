@@ -8,7 +8,7 @@ def create_account(db: Session, account_data, user_id: int):
         user_id=user_id,
         name=account_data.name,
         account_type=account_data.account_type,
-        balance=account_data.balance
+        balance=account_data.balance,
     )
 
     db.add(account)

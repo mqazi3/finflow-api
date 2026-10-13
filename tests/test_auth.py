@@ -1,6 +1,5 @@
 from app.auth import create_access_token
 from app.config import settings
-
 from tests.helpers import API, register_and_login
 
 

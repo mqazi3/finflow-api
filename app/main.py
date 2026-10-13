@@ -1,5 +1,5 @@
-from contextlib import asynccontextmanager
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +10,6 @@ from app.cache import redis_client
 from app.config import settings
 from app.database import SessionLocal
 from app.logger import logger
-
 from app.routes.accounts import router as accounts_router
 from app.routes.analytics import router as analytics_router
 from app.routes.auth import router as auth_router

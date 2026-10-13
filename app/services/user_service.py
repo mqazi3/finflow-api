@@ -14,10 +14,7 @@ def create_user(db: Session, username: str, password: str):
     if existing_user:
         return None
 
-    user = User(
-        username=username,
-        hashed_password=hash_password(password)
-    )
+    user = User(username=username, hashed_password=hash_password(password))
 
     db.add(user)
     db.commit()

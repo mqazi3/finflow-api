@@ -40,6 +40,12 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt -r requirements-dev.txt
 
+      - name: Lint
+        run: ruff check .
+
+      - name: Check formatting
+        run: ruff format --check .
+
       - name: Apply migrations to an empty database
         run: alembic upgrade head
 
