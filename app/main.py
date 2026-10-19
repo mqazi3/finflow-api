@@ -72,10 +72,7 @@ Features include:
     lifespan=lifespan,
     contact={
         "name": "Muhammad Qazi",
-        "email": "qz_usman@yahoo.com",
-    },
-    license_info={
-        "name": "MIT",
+        "email": "muhammadqazi1998@gmail.com",
     },
 )
 
